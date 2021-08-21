@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+import subprocess
+import optparse
+
+def change_mac(interface, new_mac):
+    print("Your MAC address will now be changed from " + interface + " to " + new_mac)
+
+    subprocess.call(["ifconfig", interface, "down"])
+    subprocess.call(["ifconfig", interface, "hw", "ether", new_mac])
+    subprocess.call(["ifconfig", interface, "up"])
+
+parser_var = optparse.OptionParser()
+parser_var.add_option("-i", "--interface", dest="interface", help="interface to change the MAC address")
+parser_var.add_option("-m", "--mac", dest="new_mac", help="new MAC")
+
+(options, arguments) = parser_var.parse_args()
+
+change_mac(options.interface, options.new_mac)
+
+//code prompts new MAC from user, changes current MAC to given input
+//will throw error if the input is in wrong format
+//help option is functional
