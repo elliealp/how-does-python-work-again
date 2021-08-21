@@ -1,7 +1,11 @@
+#main function does not work properly if the new MAC input is in incorrect format ie xx:xx is automatically filled with 0
+#code thinks xx:xx and xx:xx:00:00:00:00 are different and throws "your MAC was unchaged" despite the MAC changing properly
+
 #!/usr/bin/env python
 
 import subprocess
 import optparse
+import re
 
 
 def get_args():
@@ -19,14 +23,33 @@ def get_args():
 
 def change_mac(interface, new_mac):
     print("Changing the MAC for " + interface + " to " + new_mac)
-    subprocess.call(["ifconfig", interface, "down"])
-    subprocess.call(["ifconfig", interface, "hw", "ether", new_mac])
-    subprocess.call(["ifconfig", interface, "up"])
+    subprocess.call(["sudo", "ifconfig", interface, "down"])
+    subprocess.call(["sudo", "ifconfig", interface, "hw", "ether", new_mac])
+    subprocess.call(["sudo", "ifconfig", interface, "up"])
 
 
+def get_current(interface):
+    icf_result = subprocess.check_output(["ifconfig", interface])
+    current_mac_search = re.search(r"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w", icf_result)
+
+    if current_mac_search:
+        return current_mac_search.group(0)
+    else:
+        print("Couldn't find a MAC address.")
+
+
+# main function
 options = get_args()
+
+current_mac = get_current(options.interface)
+
+print("Current MAC is " + str(current_mac))
+
 change_mac(options.interface, options.new_mac)
 
-#takes user input with -m and -i in the terminal ie python filename.py -i interface -m MAC address
-#asks again when there's no user input. throws error on wrong input
-#now slightly more secure. you could give commands to the terminal via user input in the previous version
+current_mac = get_current(options.interface)
+if current_mac == options.new_mac:
+    print("MAC was successfully changed to " + current_mac)
+else:
+    print("Your MAC was unchanged.")
+
