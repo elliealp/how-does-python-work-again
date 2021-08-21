@@ -3,7 +3,7 @@ import subprocess
 import optparse
 
 def change_mac(interface, new_mac):
-    print("Your MAC address will now be changed from " + interface + " to " + new_mac)
+    print("Your MAC address for " + interface + " will now be changed to " + new_mac)
 
     subprocess.call(["ifconfig", interface, "down"])
     subprocess.call(["ifconfig", interface, "hw", "ether", new_mac])
