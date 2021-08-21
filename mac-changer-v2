@@ -1,0 +1,67 @@
+#script to automatically change MAC in specified intervals until manually stopped
+#optparse replaced with argparse
+
+#!/usr/bin/env python
+
+import sys
+import subprocess
+import argparse
+import random
+import time
+import re
+
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--interface", dest="interface", help="interface to change MAC.")
+    options = parser.parse_args()
+    if not options.interface:
+        parser.error(" network interface not specified. (--help for more info.)")
+    else:
+        return options.interface
+
+
+def change_mac(interface, new_mac):
+    subprocess.call(["sudo", "ifconfig", interface, "down"])
+    subprocess.call(["sudo", "ifconfig", interface, "hw", "ether", new_mac])
+    subprocess.call(["sudo", "ifconfig", interface, "up"])
+
+
+def get_random():
+    chars = "0123456789abcdef"
+    random_mac = "00"
+    for i in range(5):
+        random_mac += ":" + \
+                      random.choice(chars) \
+                      + random.choice(chars)
+    return random_mac
+
+
+def get_current(interface):
+    read_ifconfig = subprocess.check_output(["ifconfig", interface])
+    return re.search(r"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w", str(read_ifconfig)).group(0)
+
+
+print("automatic MAC changer is running.")
+print("\nuse CTRL-C to stop the script.")
+
+interval = 600 
+#in seconds
+interface = get_args()
+current_mac = get_current(interface)
+try:
+    while True:
+        random_mac = get_random()
+        change_mac(interface, random_mac)
+        set_new_mac = subprocess.check_output(["ifconfig", interface])
+        if random_mac in str(set_new_mac):
+            print("\nMAC changed to " + random_mac)
+            sys.stdout.flush()
+
+        time.sleep(interval)
+
+except KeyboardInterrupt:
+    print("\nstopping the script...")
+
+    # to restore MAC before exit
+    # change_mac(interface, current_mac)
